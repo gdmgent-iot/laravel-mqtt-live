@@ -15,8 +15,7 @@
         }
         #messages {
             width: 100%;
-            height:90vh;
-            font-size: 1.5rem;
+            height:50vh;
             padding: 10px;
             box-sizing: border-box;
             background: black; 
@@ -27,7 +26,24 @@
 </head>
 <body>
     <h1>Messages from broker</h1>
-    <textarea name="" id="messages">waiting...</textarea>
+    <form action="/api/heartbeat" method="post">
+        @csrf
+        <div>
+            Naam <br>
+            <input type="text" id="name" name="name" placeholer="Give yo name plz">
+        </div>
+        <div>
+            Hartslagen <br>
+            <input type="text" id="heartbeats" name="heartbeats" readonly>
+        </div>
+        <div>
+            Berichten <br>
+            <textarea name="" id="messages">waiting...</textarea>
+        </div>
+        <div>
+            <button id="send">Send</button>
+        </div>
+    </form>
 
     <!-- mqtt.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/2.18.8/mqtt.min.js"></script>
@@ -35,6 +51,8 @@
         const host = "192.168.0.66";
         const port = 9001;
         const $msgBox = document.getElementById('messages');
+        const $inpHeartbeats = document.getElementById('heartbeats');
+        const heartbeats = [];
 
         const client = mqtt.connect(`ws://${host}:${port}`);
         client.on('connect', () => {
@@ -46,22 +64,23 @@
             })
         });
         client.on('message', (topic, message) => {
-            // message is Buffer
-            streamLetterPerLetter(message.toString());
+            const heartbeat = parseInt(message.toString());
+
+            if (validateHeartbeat(heartbeat)) {
+                heartbeats.push(heartbeat);
+               $inpHeartbeats.value = heartbeats.join(', ');
+            } 
+
+            $msgBox.value += `Heartbeat: ${heartbeat} \n`;
         })
 
-
-        function streamLetterPerLetter(text, index = 0) {
-            if (index < text.length) {
-                $msgBox.value += text[index];
-                index++;
-                setTimeout(() => {
-                    streamLetterPerLetter(text, index);
-                }, 50);
-            } else {
-                $msgBox.value += '\n';
+        function validateHeartbeat(min=50, max=180) {
+            if (min < 50 || max > 180) {
+                return false;
             }
+            return true;
         }
+
     </script>
 
 </body>
