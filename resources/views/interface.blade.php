@@ -46,8 +46,22 @@
             })
         });
         client.on('message', (topic, message) => {
-            $msgBox.value += message.toString() + '\n'
+            // message is Buffer
+            streamLetterPerLetter(message.toString());
         })
+
+
+        function streamLetterPerLetter(text, index = 0) {
+            if (index < text.length) {
+                $msgBox.value += text[index];
+                index++;
+                setTimeout(() => {
+                    streamLetterPerLetter(text, index);
+                }, 50);
+            } else {
+                $msgBox.value += '\n';
+            }
+        }
     </script>
 
 </body>
